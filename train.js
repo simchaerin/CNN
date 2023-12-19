@@ -1,9 +1,12 @@
 let data = [];
 
 let layerCount = 4;
-let neuronCount = [28*28, 16, 16, 10];
+let neuronCount = [26*26, 16, 16, 10];
+let inputSize = 28;
+let filterSize = 3;
 let iter = 50;
 
+let array = [];
 let w = [];
 let a = [];
 let z = [];
@@ -12,20 +15,34 @@ let da = [];
 let dw = [];
 let db = [];
 
+let filter1 = [1,0,1,0,1,0,1,0,1]; //대각선
+let filter2 = [0,0,0,1,1,1,0,0,0]; //수평선
+let filter3 = [0,1,0,0,1,0,0,1,0]; //수직선
+ 
+let recep = [];
+let filtered1 = [];
+let filtered2 = [];
+let filtered3 = [];
+
+let FeatureMap = [];
+let ActivationMap = []; 
+
+ 
 
 $.ajax({ 
-    url: './mnist_data/mnist_train_to50000.csv',
+    url: './mnist_data/mnist_train_small.csv',
     dataType:'text',
     timeout: 2*60*60*1000,
     success: function(res) { 
         let allRow = res.split("\n");
         for(let singleRow = 1; singleRow < allRow.length; singleRow++) {
             data[singleRow-1] = allRow[singleRow].split(",");
-            console.log(data[singleRow-1]);
+            //console.log(data[singleRow-1]);
         }
                 
         for (let L = 0; L < layerCount; L++){
             // a, z, da 설정
+            array.push([]);
             a.push([]);
             z.push([]);
             da.push([]);
@@ -51,7 +68,7 @@ $.ajax({
             }
         }
         
-        for (let i = 0; i < data.length - 1; i++){
+        for (let i = 0; i < data.length - 1; i++){ 
             ff(data[i]);
             bp();
             
@@ -65,6 +82,10 @@ $.ajax({
         console.log(JSON.stringify(b));
     }
 });
+
+
+
+
 
 // 출력용
 function Cost(){
@@ -102,8 +123,13 @@ function dot(m1, m2){
 
 // 시그모이드 함수
 function sigmoid(x){
-    return 1 / (1 + Math.exp(-x));
+    return  1 / (1 + Math.exp(-x));
 }
+
+function ReLu(x){
+    return Math.max(0, x);
+}
+
 
 let y = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -116,7 +142,6 @@ function updateLayer(L){
     for (let i = 0; i < neuronCount[L]; i++){
         // z 계산
         
-        //console.log(w[L][i]);
         //console.log(a[L - 1]);
         z[L][i] = dot(w[L][i], a[L - 1]) + b[L][i];
         //console.log(z[L][i]);
@@ -132,23 +157,61 @@ function updateLayer(L){
     //console.log(a[L]);
 }
 
+
+
+
 // 순전파 (Feed Forward)
 function ff(input){
-    // 첫 번째 layer에 대해
+    // 첫 번째 layer에 대해 
     y = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     y[parseInt(input[0])] = 1;
     //console.log(a);
     
-    for (let i = 0; i < neuronCount[0]; i++){
+    for (let i = 0; i < inputSize ** 2; i++){
         // i + 1인 이유는 input[0]이 label이라서
-        a[0][i] = parseInt(input[i + 1]) / 255;
+        //array[0][i] = parseInt(input[i+1]) / 255;
+        a[0][i] = parseInt(input[i+1]) / 255;
     }
+
     
+ 
+
+    //수용영역 만들기
+    // for (let n=0; n < inputSize - filterSize + 1; n++){
+    //     for (let i = 0; i < inputSize - filterSize + 1; i++){
+    //         recep.push([]);
+    //         for (j = 0; j < filterSize; j++){
+    //             for (k = 0; k < filterSize; k++){
+    //                 recep[26 * n + i].push(array[0][i + k + inputSize * j]);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // for(i = 0; i < neuronCount[0]; i++){
+    //     for(j = 0; j< filterSize ** 2; j++){
+    //         filtered1[i] = dot(recep[i], filter1);
+    //         filtered2[i] = dot(recep[i], filter2);
+    //         filtered3[i] = dot(recep[i], filter3);
+    //     }
+    // }
+
+    // for(i = 0; i < neuronCount[0]; i++){ 
+    //     FeatureMap[i] = filtered1[i] + filtered2[i] + filtered3[i];
+    //     ActivationMap[i] = ReLu(FeatureMap[i]);
+    //     a[0][i] = ActivationMap[i];
+
+
+    // }
+ 
     // 모든 layer에 대해
     for (let L = 1; L < layerCount; L++){
         updateLayer(L);
     }
 }
+
+
+
 
 // 역전파 (Back Propagation)
 function bp(){

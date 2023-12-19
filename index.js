@@ -54,6 +54,7 @@ document.addEventListener("mouseup", () => {
     isDrawing = false;
 });
 
+let array = [];
 let w = [];
 let a = [];
 let z = [];
@@ -63,7 +64,27 @@ let dw = [];
 let db = [];
 
 let layerCount = 4;
-let neuronCount = [28*28, 16, 16, 10];
+let neuronCount = [26*26, 16, 16, 10];
+let inputSize = 28;
+
+
+let y = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+let filter1 = [1,0,1,0,1,0,1,0,1];
+let filter2 = [0,0,0,1,1,1,0,0,0];
+let filter3 = [0,1,0,0,1,0,0,1,0];
+ 
+let filterSize = 3; 
+let recep = [];
+let filtered = [];
+let FeatureMap = [];
+let ActivationMap = [];
+
+
+let filtered1 = [];
+let filtered2 = [];
+let filtered3 = [];
+
+
 
 $.ajax({
     url: './trained_data/w.json',
@@ -75,13 +96,14 @@ $.ajax({
                 b = _b;
                                 
                 for (let L = 0; L < layerCount; L++){
+                    array.push([]);
                     a.push([]);
                     z.push([]);
                     da.push([]);
                     dw.push([]);
                     db.push([]);
                     b.push([]);
-                    w.push([]);
+                    //w.push([]);
 
                     if (L == 0) continue;
                     // w, b 설정
@@ -95,13 +117,24 @@ $.ajax({
     }
 });
 
-let y = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+
+ 
 
 let guess;
-function submit(){
+
+function submit(){ 
     guess = ff(inputValue);
+    console.log(a[0]);
+    console.log(w);
     console.log(guess);
 }
+
+ 
+
+
+
+
 
 function update(corr, val){
     if (corr){
@@ -144,19 +177,49 @@ function reset(){
 }
 
 function ff(val){
+
     for (let i = 0; i < neuronCount[0]; i++){
-        a[0][i] = val[i];
+        array[0][i] = val[i];
+        //a[0][i] = val[i];
+    } 
+
+        //수용영역 만들기
+    for (let n=0; n < inputSize - filterSize + 1; n++){
+        for (let i = 0; i < inputSize - filterSize + 1; i++){
+            recep.push([]);
+            for (j = 0; j < filterSize; j++){
+                for (k = 0; k < filterSize; k++){
+                    recep[26 * n + i].push(array[0][i + k + inputSize * j]);
+                }
+            }
+        }
     }
+
+    for(i = 0; i < neuronCount[0]; i++){
+        for(j = 0; j< filterSize ** 2; j++){
+            filtered1[i] = dot(recep[i], filter1);
+            filtered2[i] = dot(recep[i], filter2);
+            filtered3[i] = dot(recep[i], filter3);
+        }
+    }
+
+    for(i = 0; i < neuronCount[0]; i++){ 
+        FeatureMap[i] = filtered1[i] + filtered2[i] + filtered3[i];
+        ActivationMap[i] = ReLu(FeatureMap[i]);
+        a[0][i] = ActivationMap[i]; 
+
+    }
+ 
+     
     
     // 모든 layer에 대해
     for (let L = 1; L < layerCount; L++){
-        updateLayer(L);
+        updateLayer(L);  
     }
     
     let max = -987654321;
     let index = 0;
-    
-    console.log(a[layerCount - 1]);
+     
     
     // 결과 반환
     for (let i = 0; i < neuronCount[layerCount - 1]; i++){
@@ -174,14 +237,15 @@ function updateLayer(L){
     for (let i = 0; i < neuronCount[L]; i++){
         // z, a 계산
         z[L][i] = dot(w[L][i], a[L - 1]) + b[L][i];
-        a[L][i] = sigmoid(z[L][i]);
+        a[L][i] = sigmoid(z[L][i]); 
         
         da[L][i] = null;
         db[L][i] = null;
         for (let j = 0; j < neuronCount[L - 1]; j++){
             dw[L][i][j] = null;
         }
-    }
+    } 
+ 
 }
 
 // 벡터 내적 계산
@@ -195,7 +259,11 @@ function dot(m1, m2){
 
 // 시그모이드 함수
 function sigmoid(x){
-    return 1 / (1 + Math.exp(-x));
+    return  1 / (1 + Math.exp(-x));
+}
+
+function ReLu(x){
+    return Math.max(0, x);
 }
 
 // 역전파 (Back Propagation)
