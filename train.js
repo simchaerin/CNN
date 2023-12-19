@@ -169,40 +169,40 @@ function ff(input){
     
     for (let i = 0; i < inputSize ** 2; i++){
         // i + 1인 이유는 input[0]이 label이라서
-        //array[0][i] = parseInt(input[i+1]) / 255;
-        a[0][i] = parseInt(input[i+1]) / 255;
+        array[0][i] = parseInt(input[i+1]) / 255;
+        //a[0][i] = parseInt(input[i+1]) / 255;
     }
 
     
  
 
     //수용영역 만들기
-    // for (let n=0; n < inputSize - filterSize + 1; n++){
-    //     for (let i = 0; i < inputSize - filterSize + 1; i++){
-    //         recep.push([]);
-    //         for (j = 0; j < filterSize; j++){
-    //             for (k = 0; k < filterSize; k++){
-    //                 recep[26 * n + i].push(array[0][i + k + inputSize * j]);
-    //             }
-    //         }
-    //     }
-    // }
+    for (let n=0; n < inputSize - filterSize + 1; n++){
+        for (let i = 0; i < inputSize - filterSize + 1; i++){
+            recep.push([]);
+            for (j = 0; j < filterSize; j++){
+                for (k = 0; k < filterSize; k++){
+                    recep[26 * n + i].push(array[0][i + k + inputSize * j]);
+                }
+            }
+        }
+    }
 
-    // for(i = 0; i < neuronCount[0]; i++){
-    //     for(j = 0; j< filterSize ** 2; j++){
-    //         filtered1[i] = dot(recep[i], filter1);
-    //         filtered2[i] = dot(recep[i], filter2);
-    //         filtered3[i] = dot(recep[i], filter3);
-    //     }
-    // }
+    for(i = 0; i < neuronCount[0]; i++){
+        for(j = 0; j< filterSize ** 2; j++){
+            filtered1[i] = dot(recep[i], filter1);
+            filtered2[i] = dot(recep[i], filter2);
+            filtered3[i] = dot(recep[i], filter3);
+        }
+    }
 
-    // for(i = 0; i < neuronCount[0]; i++){ 
-    //     FeatureMap[i] = filtered1[i] + filtered2[i] + filtered3[i];
-    //     ActivationMap[i] = ReLu(FeatureMap[i]);
-    //     a[0][i] = ActivationMap[i];
+    for(i = 0; i < neuronCount[0]; i++){ 
+        FeatureMap[i] = filtered1[i] + filtered2[i] + filtered3[i];
+        ActivationMap[i] = ReLu(FeatureMap[i]);
+        a[0][i] = ActivationMap[i];
 
 
-    // }
+    }
  
     // 모든 layer에 대해
     for (let L = 1; L < layerCount; L++){
